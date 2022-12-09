@@ -1,13 +1,14 @@
 import os
 import sys
-from typing import Dict, Union, List, Tuple
+from typing import Dict, Generator, List, Tuple, Union
 
-import bnlearn
+import bnlearn # type: ignore
 import pandas as pd
 
 import networkx as nx
 from networkx.classes.digraph import DiGraph
-from pgmpy.models.BayesianNetwork import BayesianNetwork
+
+from pgmpy.models.BayesianNetwork import BayesianNetwork # type: ignore
 
 def read_graph(graph_path: str, CPD: bool=True) -> Dict[str, Union[BayesianNetwork, pd.DataFrame]]:
     causal_graph = bnlearn.import_DAG(graph_path, CPD)
@@ -27,7 +28,7 @@ def check_duplicates(new_nodes: List[DiGraph], already_expanded: List[DiGraph]) 
     return kept
 
 
-def get_graph_node_pairs(graph: DiGraph) -> List[Tuple[str, str]]:
+def get_graph_node_pairs(graph: DiGraph) -> Generator[Tuple[str, str], None, None]:
     for u in graph:
         for v in graph:
             if u != v:
