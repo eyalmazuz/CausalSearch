@@ -31,7 +31,7 @@ def check_duplicates(new_nodes: List[DiGraph], already_expanded: List[DiGraph]) 
 def get_graph_node_pairs(graph: DiGraph) -> Generator[Tuple[str, str], None, None]:
     for u in graph:
         for v in graph:
-            if u != v:
+            if u != v and v not in graph[u]:
                 yield (u, v)
 
 def main(graph_path):
