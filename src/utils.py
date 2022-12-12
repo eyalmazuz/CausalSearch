@@ -10,13 +10,17 @@ from networkx.classes.digraph import DiGraph
 
 from pgmpy.models.BayesianNetwork import BayesianNetwork # type: ignore
 
+def generate_fake_data(network: BayesianNetwork, n: int=100) -> pd.DataFrame:
+    return bnlearn.sampling(network, n=n)
+
 def read_graph(graph_path: str, CPD: bool=True) -> Dict[str, Union[BayesianNetwork, pd.DataFrame]]:
     causal_graph = bnlearn.import_DAG(graph_path, CPD)
 
     return causal_graph
 
 def check_is_dag(graph: DiGraph) -> bool:
-    return nx.is_directed_acyclic_graph(graph)
+    x = nx.is_directed_acyclic_graph(graph) # type: ignore
+    return x
 
 def check_duplicates(new_nodes: List[DiGraph], already_expanded: List[DiGraph]) -> List[DiGraph]:
     kept = []
@@ -26,7 +30,6 @@ def check_duplicates(new_nodes: List[DiGraph], already_expanded: List[DiGraph]) 
                 kept.append(to_be_added_graph)
 
     return kept
-
 
 def get_graph_node_pairs(graph: DiGraph) -> Generator[Tuple[str, str], None, None]:
     for u in graph:
