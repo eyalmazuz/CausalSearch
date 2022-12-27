@@ -8,6 +8,7 @@ import pandas as pd
 import networkx as nx
 from networkx.classes.digraph import DiGraph
 
+from pgmpy.estimators import BicScore
 from pgmpy.models.BayesianNetwork import BayesianNetwork # type: ignore
 
 def generate_fake_data(network: BayesianNetwork, n: int=100) -> pd.DataFrame:
@@ -21,6 +22,10 @@ def read_graph(graph_path: str, CPD: bool=True) -> Dict[str, Union[BayesianNetwo
 def check_is_dag(graph: DiGraph) -> bool:
     x = nx.is_directed_acyclic_graph(graph) # type: ignore
     return x
+
+def get_scoring_function(fn_name):
+    if fn_name == 'BIC':
+        return BicScore
 
 def check_duplicates(new_nodes: List[DiGraph], already_expanded: List[DiGraph]) -> List[DiGraph]:
     kept = []

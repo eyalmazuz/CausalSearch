@@ -8,14 +8,14 @@ from .abstract_search import Search
 from ..utils.utils import get_graph_node_pairs, check_duplicates
 
 
-class BFSSearch(Search):
+class BFS(Search):
 
     def __init__(self,
                  network,
                  criterion,
                  goal_test,
-                 scoring_function=None):
-        super(BFSSearch, self).__init__(network, criterion, goal_test, scoring_function)
+                 **kwargs):
+        super(BFS, self).__init__(network, criterion, goal_test)
 
     def find(self) -> DiGraph:
         
