@@ -25,7 +25,7 @@ def run_experiment(search_method: Search):
 def log_results(best_graph: DiGraph):
 
     nx.draw_networkx(best_graph)
-    plt.savefig('./best.png')
+    plt.savefig('./result/best.png')
 
 def main():
     pass
