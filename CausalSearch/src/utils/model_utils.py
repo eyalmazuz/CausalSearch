@@ -2,8 +2,8 @@ from functools import partial
 
 from pgmpy.estimators import BicScore
 
-from .goals import connected_degree_one, target_graph
-from .utils import check_is_dag
+from src.utils.goals import connected_degree_one, target_graph
+from src.utils.utils import check_is_dag
 
 def get_scoring_function(fn_name: str):
     if fn_name == 'BIC':

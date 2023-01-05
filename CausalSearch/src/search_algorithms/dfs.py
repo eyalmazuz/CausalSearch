@@ -8,28 +8,27 @@ from src.search_algorithms.abstract_search import Search
 from src.utils.utils import get_graph_node_pairs
 
 
-class BFS(Search):
+class DFS(Search):
 
     def __init__(self,
                  network,
                  criterion,
                  goal_test,
                  **kwargs):
-        super(BFS, self).__init__(network, criterion, goal_test)
+        super(DFS, self).__init__(network, criterion, goal_test)
 
     def find(self) -> DiGraph:
 
         graph = nx.DiGraph()
         graph.add_nodes_from(self.network['model'])
 
-        open_list = [graph]
-        closed_list: List[DiGraph] = []
+        nodes = [graph]
 
         while True:
-            if not open_list:
+            if not nodes:
                 return None
 
-            node = open_list.pop(0)
+            node = nodes.pop(0)
 
             if self.goal_test(node):
                 return node
@@ -40,11 +39,7 @@ class BFS(Search):
                 if self.goal_test(neighbor):
                     return neighbor
 
-            neighbors = self.check_duplicates(neighbors, open_list)
-            neighbors = self.check_duplicates(neighbors, closed_list)
-
-            open_list += neighbors
-            closed_list.append(node)
+            nodes = neighbors + nodes
 
     def expand(self, graph: DiGraph) -> List[DiGraph]:
         neighbors = []
@@ -56,15 +51,3 @@ class BFS(Search):
                 neighbors.append(neighbor)
 
         return neighbors
-
-    def check_duplicates(self, new_nodes: List[DiGraph], already_expanded: List[DiGraph]) -> List[DiGraph]:
-        if len(already_expanded) == 0:
-            return new_nodes
-
-        kept = []
-        for new_graph in new_nodes:
-            for exists in already_expanded:
-                if not nx.utils.graphs_equal(new_graph, exists):
-                    kept.append(new_graph)
-
-        return kept

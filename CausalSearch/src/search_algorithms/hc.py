@@ -3,8 +3,8 @@ import networkx as nx
 from networkx.classes.digraph import DiGraph
 from pgmpy.estimators import HillClimbSearch
 
-from .abstract_search import Search
-from ..utils.utils import generate_fake_data
+from src.search_algorithms.abstract_search import Search
+from src.utils.utils import generate_fake_data
 
 
 class HillClimb(Search):
@@ -12,7 +12,8 @@ class HillClimb(Search):
                  network,
                  scoring_function,
                  epsilon=1e-4,
-                 n=1000):
+                 n=1000,
+                 **kwargs):
         
         super(HillClimb, self).__init__(network, scoring_function=scoring_function)
         

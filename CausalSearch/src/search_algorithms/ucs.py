@@ -1,3 +1,4 @@
+import heapq
 from typing import Callable, List, Optional
 
 import networkx as nx
@@ -5,33 +6,43 @@ from networkx.utils import graphs_equal
 from networkx.classes.digraph import DiGraph
 
 from src.search_algorithms.abstract_search import Search
-from src.utils.utils import get_graph_node_pairs
+from src.utils.utils import get_graph_node_pairs, generate_fake_data
 
 
-class BFS(Search):
+class UCS(Search):
 
     def __init__(self,
                  network,
                  criterion,
                  goal_test,
+                 scoring_function,
+                 n=1000,
                  **kwargs):
-        super(BFS, self).__init__(network, criterion, goal_test)
+        super(UCS, self).__init__(network, criterion, goal_test)
+
+        self.n = n
+        self.data = generate_fake_data(network, n)
+        self.scorer = scoring_function(self.data)
 
     def find(self) -> DiGraph:
 
         graph = nx.DiGraph()
         graph.add_nodes_from(self.network['model'])
 
-        open_list = [graph]
+        open_list = []
+        heapq.heappush(open_list, (0, graph))
         closed_list: List[DiGraph] = []
 
         while True:
             if not open_list:
                 return None
 
-            node = open_list.pop(0)
+            cost, cur_graph = heapq.heappop(open_list)
+            node_bic = 0.0
+            for node in cur_graph:
+                node_bic += self.scorer.local_score(node, cur_graph.predecessors(node))
 
-            if self.goal_test(node):
+            if self.goal_test(cur_graph):
                 return node
 
             neighbors = self.expand(node)
@@ -40,11 +51,18 @@ class BFS(Search):
                 if self.goal_test(neighbor):
                     return neighbor
 
-            neighbors = self.check_duplicates(neighbors, open_list)
-            neighbors = self.check_duplicates(neighbors, closed_list)
+            nn = []
+            for neighbor in neighbors:
+                neighbor_bic = 0.0
+                for node in neighbor:
+                    neighbor_bic += self.scorer.local_score(node, neighbor.predecessors(node))
+
+                heapq.heappush(nn, (node_bic - neighbor_bic, neighbor))
+
+            neighbors = self.check_duplicates(nn, open_list)
+            neighbors = self.check_duplicates(nn, closed_list)
 
             open_list += neighbors
-            closed_list.append(node)
 
     def expand(self, graph: DiGraph) -> List[DiGraph]:
         neighbors = []
