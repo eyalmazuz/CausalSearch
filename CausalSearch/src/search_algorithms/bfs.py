@@ -1,7 +1,6 @@
 from typing import Callable, List, Optional
 
 import networkx as nx
-from networkx.utils import graphs_equal
 from networkx.classes.digraph import DiGraph
 
 from src.search_algorithms.abstract_search import Search
@@ -42,17 +41,16 @@ class BFS(Search):
 
             neighbors = self.check_duplicates(neighbors, open_list)
             neighbors = self.check_duplicates(neighbors, closed_list)
-
             open_list += neighbors
             closed_list.append(node)
 
     def expand(self, graph: DiGraph) -> List[DiGraph]:
         neighbors = []
-        for (u, v) in get_graph_node_pairs(graph):
+        for u, v in get_graph_node_pairs(graph):
             neighbor = graph.copy()
             neighbor.add_edge(u, v)
 
-            if self.criterion and self.criterion(neighbor) and not graphs_equal(graph, neighbor):
+            if self.criterion and self.criterion(neighbor) and neighbor not in neighbors:
                 neighbors.append(neighbor)
 
         return neighbors
@@ -61,10 +59,7 @@ class BFS(Search):
         if len(already_expanded) == 0:
             return new_nodes
 
-        kept = []
-        for new_graph in new_nodes:
-            for exists in already_expanded:
-                if not nx.utils.graphs_equal(new_graph, exists):
-                    kept.append(new_graph)
-
+        already_expanded_set = set(already_expanded)
+        kept = [new_graph for new_graph in new_nodes
+                if not any(nx.is_isomorphic(new_graph, exists) for exists in already_expanded_set)]
         return kept

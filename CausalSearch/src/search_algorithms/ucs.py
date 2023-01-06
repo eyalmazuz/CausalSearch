@@ -66,11 +66,11 @@ class UCS(Search):
 
     def expand(self, graph: DiGraph) -> List[DiGraph]:
         neighbors = []
-        for (u, v) in get_graph_node_pairs(graph):
+        for u, v in get_graph_node_pairs(graph):
             neighbor = graph.copy()
             neighbor.add_edge(u, v)
 
-            if self.criterion and self.criterion(neighbor) and not graphs_equal(graph, neighbor):
+            if self.criterion and self.criterion(neighbor) and neighbor not in neighbors:
                 neighbors.append(neighbor)
 
         return neighbors
