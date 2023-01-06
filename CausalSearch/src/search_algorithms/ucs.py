@@ -79,10 +79,7 @@ class UCS(Search):
         if len(already_expanded) == 0:
             return new_nodes
 
-        kept = []
-        for new_graph in new_nodes:
-            for exists in already_expanded:
-                if not nx.utils.graphs_equal(new_graph, exists):
-                    kept.append(new_graph)
-
+        already_expanded_set = set(already_expanded)
+        kept = [(cost, new_graph) for (cost, new_graph) in new_nodes
+                if not any(nx.is_isomorphic(new_graph, exists) for (_, exists) in already_expanded_set)]
         return kept
