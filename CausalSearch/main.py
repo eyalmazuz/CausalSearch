@@ -30,23 +30,35 @@ def parse_args():
 
     parser.add_argument('--debug', help='print helpful debug message', action='store_true')
 
-
     return parser.parse_args()
 
 
 def main():
-
     args = parse_args()
+
+    debug = args.debug
+    del args.debug
+
+    if debug:
+        print(f'Loading graph from: {args.data}')
 
     network = bn.import_DAG(args.data)
 
     model_params = {k: v for k, v in vars(args).items() if v}
+    if debug:
+        print(f'{model_params=}')
 
     save_path = model_params.pop('save_path')
+    if debug:
+        print(f'Will save results to: {save_path}')
 
-    search_algorithm = get_model(network, **model_params)
+    if debug:
+        print('Creating search algorithm')
+    search_algorithm = get_model(network, debug, **model_params)
 
-    run_experiment(search_algorithm, save_path)
+    if debug:
+        print('Running experiment')
+    run_experiment(search_algorithm, save_path, debug)
 
 
 if __name__ == "__main__":

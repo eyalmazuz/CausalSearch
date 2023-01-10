@@ -42,22 +42,28 @@ class BicScore(StructureScore):
         return score
 
 
-def get_scoring_function(fn_name: str):
+def get_scoring_function(fn_name: str, debug):
+    if debug:
+        print(f'Loading scoring function: {fn_name}')
     if fn_name == 'BIC':
         return BicScore
 
 
-def get_criterion(criterion: str):
+def get_criterion(criterion: str, debug):
+    if debug:
+        print(f'Loading criterion function: {criterion}')
     if criterion == 'DAG':
-        crit = check_is_dag 
+        crit = check_is_dag
     else:
         raise ValueError('Criterion does not exists')
     return crit
 
 
-def get_goal(test: str, network):
+def get_goal(test: str, network, debug):
+    if debug:
+        print(f'Loading goal test function: {test}')
     if test == 'Degree One':
-        fn = connected_degree_one 
+        fn = connected_degree_one
     elif test == 'Target':
         fn = partial(target_graph, network=network)
     else:
