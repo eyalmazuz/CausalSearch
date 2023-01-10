@@ -1,8 +1,9 @@
 import heapq
+import os
 from typing import Callable, List, Optional
 
+import matplotlib.pyplot as plt
 import networkx as nx
-from networkx.utils import graphs_equal
 from networkx.classes.digraph import DiGraph
 
 from src.search_algorithms.abstract_search import Search
@@ -30,47 +31,73 @@ class UCS(Search):
         graph.add_nodes_from(self.network['model'])
 
         open_list = []
-        heapq.heappush(open_list, (0, graph))
+        node_bic = 0.0
+        for node in graph:
+            node_bic -= self.scorer.local_score(node, graph.predecessors(node))
+        # heapq.heappush(open_list, (node_bic, node_bic, graph))
+        open_list.append((node_bic, graph))
         closed_list: List[DiGraph] = []
 
-        while True:
-            if not open_list:
-                return None
+        while open_list:
+            print(f'{len(open_list)=}, {len(closed_list)=}')
+            best, graph = float('inf'), None
+            for (cost, cur_graph) in open_list:
+                if cost <= best:
+                    best = cost
+                    graph = cur_graph
 
-            cost, cur_graph = heapq.heappop(open_list)
-            node_bic = 0.0
-            for node in cur_graph:
-                node_bic += self.scorer.local_score(node, cur_graph.predecessors(node))
+            if graph is not None:
+                open_list.remove((cost, cur_graph))
+
+            cost, cur_graph = best, graph
 
             if self.goal_test(cur_graph):
-                return node
+                return cur_graph
 
-            neighbors = self.expand(node)
+            neighbors = self.expand(cur_graph, closed_list)
+            print(f'{len(neighbors)=}')
 
-            for neighbor in neighbors:
-                if self.goal_test(neighbor):
-                    return neighbor
+            for neighbor_graph in neighbors:
+                if self.goal_test(neighbor_graph):
+                    return neighbor_graph
 
-            nn = []
-            for neighbor in neighbors:
+            for neighbor_graph in neighbors:
                 neighbor_bic = 0.0
-                for node in neighbor:
-                    neighbor_bic += self.scorer.local_score(node, neighbor.predecessors(node))
+                for node in neighbor_graph:
+                    neighbor_bic -= self.scorer.local_score(node, neighbor_graph.predecessors(node))
 
-                heapq.heappush(nn, (node_bic - neighbor_bic, neighbor))
+                found = False
+                visited, score = None, 0
+                for i, (score, visited) in enumerate(open_list):
+                    if nx.is_isomorphic(neighbor_graph, visited):
+                        found = True
+                        break
 
-            neighbors = self.check_duplicates(nn, open_list)
-            neighbors = self.check_duplicates(nn, closed_list)
+                if found:
+                    if neighbor_bic < score:
+                        open_list.remove((score, visited))
+                        print(open_list)
+                        print(f'{(neighbor_bic - cost, neighbor_graph)=}')
 
-            open_list += neighbors
+                        open_list.append((neighbor_bic - cost, neighbor_graph))
 
-    def expand(self, graph: DiGraph) -> List[DiGraph]:
+                else:
+                    print(open_list)
+                    print(f'{(neighbor_bic - cost, neighbor_graph)=}')
+
+                    open_list.append((neighbor_bic - cost, neighbor_graph))
+
+            closed_list.append(neighbor_graph)
+
+    def expand(self, graph: DiGraph, closed_list: List[DiGraph]) -> List[DiGraph]:
         neighbors = []
         for u, v in get_graph_node_pairs(graph):
             neighbor = graph.copy()
             neighbor.add_edge(u, v)
 
-            if self.criterion and self.criterion(neighbor) and neighbor not in neighbors:
+            if (self.criterion and self.criterion(neighbor) and
+               neighbor not in neighbors and
+               not any(nx.is_isomorphic(neighbor, exists) for exists in closed_list)):
                 neighbors.append(neighbor)
 
         return neighbors

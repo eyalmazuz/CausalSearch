@@ -14,7 +14,7 @@ def parse_args():
                         help='Search algorithm to find the optimal graph')
 
     parser.add_argument('-sf', '--scoring-function', type=str, choices=['BIC'],
-                        help='Scoring function for a given graph')
+                        default='BIC', help='Scoring function for a given graph')
 
     parser.add_argument('-c', '--criterion', type=str, choices=['DAG'],
                         help='expansion criteria for search methods')
@@ -27,6 +27,9 @@ def parse_args():
     parser.add_argument('--epsilon', type=float, help='epsilon threshold for hill climb')
 
     parser.add_argument('--save_path', type=str, help='Path to where to save the results')
+
+    parser.add_argument('--debug', help='print helpful debug message', action='store_true')
+
 
     return parser.parse_args()
 
