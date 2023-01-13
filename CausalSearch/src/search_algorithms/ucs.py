@@ -1,9 +1,9 @@
-import heapq
-import os
-from typing import Callable, List, Optional
+from typing import List
+import logging
+logger = logging.getLogger(__name__)
 
-import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
 from networkx.classes.digraph import DiGraph
 
 from src.search_algorithms.abstract_search import Search
@@ -39,10 +39,10 @@ class UCS(Search):
         closed_list: List[DiGraph] = []
 
         while open_list:
-            print(f'{len(open_list)=}, {len(closed_list)=}')
-            best, graph = float('inf'), None
+            logging.debug(f'{len(open_list)=}, {len(closed_list)=}')
+            best, graph = float('-inf'), None
             for (cost, cur_graph) in open_list:
-                if cost <= best:
+                if cost >= best:
                     best = cost
                     graph = cur_graph
 
@@ -55,7 +55,7 @@ class UCS(Search):
                 return cur_graph
 
             neighbors = self.expand(cur_graph, closed_list)
-            print(f'{len(neighbors)=}')
+            logging.debug(f'{len(neighbors)=}')
 
             for neighbor_graph in neighbors:
                 if self.goal_test(neighbor_graph):
@@ -66,6 +66,8 @@ class UCS(Search):
                 for node in neighbor_graph:
                     neighbor_bic -= self.scorer.local_score(node, neighbor_graph.predecessors(node))
 
+                neighbor_cost = np.maximum(cost - neighbor_bic, 0)
+
                 found = False
                 visited, score = None, 0
                 for i, (score, visited) in enumerate(open_list):
@@ -74,18 +76,18 @@ class UCS(Search):
                         break
 
                 if found:
-                    if neighbor_bic < score:
+                    if neighbor_cost > score:
                         open_list.remove((score, visited))
-                        print(open_list)
-                        print(f'{(neighbor_bic - cost, neighbor_graph)=}')
+                        logging.debug(open_list)
+                        logging.debug(f'{(neighbor_cost, neighbor_graph)=}')
 
-                        open_list.append((neighbor_bic - cost, neighbor_graph))
+                        open_list.append((neighbor_cost, neighbor_graph))
 
                 else:
-                    print(open_list)
-                    print(f'{(neighbor_bic - cost, neighbor_graph)=}')
+                    logging.debug(open_list)
+                    logging.debug(f'{(neighbor_cost, neighbor_graph)=}')
 
-                    open_list.append((neighbor_bic - cost, neighbor_graph))
+                    open_list.append((neighbor_cost, neighbor_graph))
 
             closed_list.append(neighbor_graph)
 

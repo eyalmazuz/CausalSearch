@@ -1,6 +1,8 @@
 import os
 import sys
 from typing import Dict, Generator, List, Tuple, Union
+import logging
+logger = logging.getLogger(__name__)
 
 import bnlearn # type: ignore
 import pandas as pd

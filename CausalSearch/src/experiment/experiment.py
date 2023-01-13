@@ -2,6 +2,8 @@ from datetime import datetime
 import os
 from time import time
 from typing import Any, Callable, List, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -18,14 +20,14 @@ def run_experiment(search_method: Search, save_path: str, debug):
 
     start = time()
     if debug:
-        print(f'Start time: {datetime.now()}')
+        logging.info(f'Start time: {datetime.now()}')
 
     best_graph = search_method.find()
 
     end = time()
     if debug:
-        print(f'End time: {datetime.now()}')
-    print(f'Run took {end - start} seconds')
+        logging.info(f'End time: {datetime.now()}')
+    logging.info(f'Run took {end - start} seconds')
 
     if hasattr(search_method, 'data'):
         data = search_method.data
@@ -33,7 +35,7 @@ def run_experiment(search_method: Search, save_path: str, debug):
         data = generate_fake_data(search_method.network)
 
     if debug:
-        print('Logging results')
+        logging.info('Logging results')
     log_results(best_graph, search_method.network, data, save_path, debug)
 
 
@@ -44,16 +46,16 @@ def log_results(best_graph: DiGraph, network: BayesianNetwork, data, save_path: 
         os.makedirs(save_path, exist_ok=True)
 
     if debug:
-        print(f'Creating save folder at: {save_path}')
+        logging.info(f'Creating save folder at: {save_path}')
 
     if debug:
-        print('Saving graph')
+        logging.info('Saving graph')
     # saves an image of the graph
     nx.draw_networkx(best_graph)
     plt.savefig(os.path.join(save_path, 'best_graph.png'))
 
     if debug:
-        print('Calculating metrics')
+        logging.info('Calculating metrics')
     # convert the model to networkx DiGraph
     model = network['model']
     goal = nx.DiGraph()
@@ -65,15 +67,15 @@ def log_results(best_graph: DiGraph, network: BayesianNetwork, data, save_path: 
     shared_edges = set(best_graph.edges) & set(goal.edges)
 
     if debug:
-        print('Calculating Precision')
+        logging.info('Calculating Precision')
     precision = len(shared_edges) / len(best_graph.edges)
 
     if debug:
-        print('Calculating Recall')
+        logging.info('Calculating Recall')
     recall = len(shared_edges) / len(goal.edges)
 
     if debug:
-        print('Calculating BIC score')
+        logging.info('Calculating BIC score')
     # calculate BIC score
     scorer = BicScore(data)
 
@@ -82,6 +84,8 @@ def log_results(best_graph: DiGraph, network: BayesianNetwork, data, save_path: 
         bic_score += scorer.local_score(node, best_graph.predecessors(node))
 
     print(f'Precision: {round(precision, 4)}, Recall: {round(recall, 4)} BIC: {round(bic_score, 4)}')
+    if debug:
+        logging.info(f'Precision: {round(precision, 4)}, Recall: {round(recall, 4)} BIC: {round(bic_score, 4)}')
 
 
 def main():

@@ -1,9 +1,14 @@
 from argparse import ArgumentParser
+from datetime import datetime
+import logging
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 import bnlearn as bn
 
 from src.experiment.experiment import run_experiment
 from src.search_algorithms.get_model import get_model
+
+FORMAT = '%(asctime)s %(message)s'
 
 
 def parse_args():
@@ -40,24 +45,25 @@ def main():
     del args.debug
 
     if debug:
-        print(f'Loading graph from: {args.data}')
+        logging.basicConfig(filename=f"logs/{datetime.now()}.log", format=FORMAT, level=logging.DEBUG)
+        logging.info(f'Loading graph from: {args.data}')
 
     network = bn.import_DAG(args.data)
 
     model_params = {k: v for k, v in vars(args).items() if v}
     if debug:
-        print(f'{model_params=}')
+        logging.info(f'{model_params=}')
 
     save_path = model_params.pop('save_path')
     if debug:
-        print(f'Will save results to: {save_path}')
+        logging.info(f'Will save results to: {save_path}')
 
     if debug:
-        print('Creating search algorithm')
+        logging.info('Creating search algorithm')
     search_algorithm = get_model(network, debug, **model_params)
 
     if debug:
-        print('Running experiment')
+        logging.info('Running experiment')
     run_experiment(search_algorithm, save_path, debug)
 
 

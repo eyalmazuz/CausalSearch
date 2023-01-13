@@ -1,5 +1,7 @@
 from functools import partial
 from math import log
+import logging
+logger = logging.getLogger(__name__)
 
 import numpy as np
 from pgmpy.estimators import StructureScore
@@ -44,14 +46,14 @@ class BicScore(StructureScore):
 
 def get_scoring_function(fn_name: str, debug):
     if debug:
-        print(f'Loading scoring function: {fn_name}')
+        logging.info(f'Loading scoring function: {fn_name}')
     if fn_name == 'BIC':
         return BicScore
 
 
 def get_criterion(criterion: str, debug):
     if debug:
-        print(f'Loading criterion function: {criterion}')
+        logging.info(f'Loading criterion function: {criterion}')
     if criterion == 'DAG':
         crit = check_is_dag
     else:
@@ -61,7 +63,7 @@ def get_criterion(criterion: str, debug):
 
 def get_goal(test: str, network, debug):
     if debug:
-        print(f'Loading goal test function: {test}')
+        logging.info(f'Loading goal test function: {test}')
     if test == 'Degree One':
         fn = connected_degree_one
     elif test == 'Target':

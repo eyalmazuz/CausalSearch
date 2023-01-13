@@ -1,6 +1,9 @@
 import networkx as nx
 from networkx.classes.digraph import DiGraph
 from pgmpy.models.BayesianNetwork import BayesianNetwork # type: ignore
+import logging
+logger = logging.getLogger(__name__)
+
 
 def connected_degree_one(graph: DiGraph):
     if not nx.is_weakly_connected(graph):
@@ -12,6 +15,7 @@ def connected_degree_one(graph: DiGraph):
 
     return True
 
+
 def target_graph(graph: DiGraph, network: BayesianNetwork):
     model = network['model']
     goal = nx.DiGraph()
@@ -20,4 +24,3 @@ def target_graph(graph: DiGraph, network: BayesianNetwork):
     goal.add_edges_from(model.edges)
 
     return nx.utils.graphs_equal(graph, goal)
-

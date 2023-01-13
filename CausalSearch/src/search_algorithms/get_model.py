@@ -2,6 +2,8 @@ from .bfs import BFS
 from .dfs import DFS
 from .ucs import UCS
 from .hc import HillClimb
+import logging
+logger = logging.getLogger(__name__)
 
 from src.utils.model_utils import get_criterion, get_goal, get_scoring_function
 
@@ -9,7 +11,7 @@ from src.utils.model_utils import get_criterion, get_goal, get_scoring_function
 def get_model(network, debug, **kwargs):
     search_method = kwargs.pop('search_method')
     if debug:
-        print(f'Loading search method: {search_method}')
+        logging.info(f'Loading search method: {search_method}')
     if search_method == 'BFS':
         criterion = get_criterion(kwargs.pop('criterion'), debug)
         goal_test = get_goal(kwargs.pop('goal_test'), network, debug)
