@@ -17,6 +17,7 @@ class UCS(Search):
                  criterion,
                  goal_test,
                  scoring_function,
+                 edge_function,
                  n=1000,
                  **kwargs):
         super(UCS, self).__init__(network, criterion, goal_test)
@@ -24,25 +25,30 @@ class UCS(Search):
         self.n = n
         self.data = generate_fake_data(network, n)
         self.scorer = scoring_function(self.data)
+        self.edge_function = edge_function
 
-    def find(self) -> DiGraph:
+    def find(self, debug=False) -> DiGraph:
 
         graph = nx.DiGraph()
         graph.add_nodes_from(self.network['model'])
 
         open_list = []
-        node_bic = 0.0
+        start_bic = 0.0
         for node in graph:
-            node_bic -= self.scorer.local_score(node, graph.predecessors(node))
-        # heapq.heappush(open_list, (node_bic, node_bic, graph))
-        open_list.append((node_bic, graph))
+            start_bic -= self.scorer.local_score(node, graph.predecessors(node))
+        open_list.append((start_bic, graph))
         closed_list: List[DiGraph] = []
+        if debug:
+            logging.debug(f'Initial BIC: {start_bic=}')
 
+        i = 0
         while open_list:
-            logging.debug(f'{len(open_list)=}, {len(closed_list)=}')
-            best, graph = float('-inf'), None
+            i += 1
+            if debug:
+                logging.debug(f'{len(open_list)=}, {len(closed_list)=}')
+            best, graph = float('inf'), None
             for (cost, cur_graph) in open_list:
-                if cost >= best:
+                if cost <= best:
                     best = cost
                     graph = cur_graph
 
@@ -50,12 +56,15 @@ class UCS(Search):
                 open_list.remove((cost, cur_graph))
 
             cost, cur_graph = best, graph
+            if debug:
+                logging.debug(f'Best Graph at iteration {i=} {cost=}, {cur_graph=}')
 
             if self.goal_test(cur_graph):
                 return cur_graph
 
             neighbors = self.expand(cur_graph, closed_list)
-            logging.debug(f'{len(neighbors)=}')
+            if debug:
+                logging.debug(f'Iteration {i=} has {len(neighbors)=} new neighbors')
 
             for neighbor_graph in neighbors:
                 if self.goal_test(neighbor_graph):
@@ -66,30 +75,37 @@ class UCS(Search):
                 for node in neighbor_graph:
                     neighbor_bic -= self.scorer.local_score(node, neighbor_graph.predecessors(node))
 
-                neighbor_cost = np.maximum(cost - neighbor_bic, 0)
+                # neighbor_cost = np.minimum(neighbor_bic - cost, 0)
+                neighbor_cost = self.edge_function(neighbor_bic - cost)
+                if debug:
+                    logging.debug(f'New neighbor BIC Before: {(neighbor_bic - cost)=} After: {neighbor_cost=}')
 
                 found = False
                 visited, score = None, 0
                 for i, (score, visited) in enumerate(open_list):
-                    if nx.is_isomorphic(neighbor_graph, visited):
+                    if nx.utils.graphs_equal(neighbor_graph, visited):
                         found = True
                         break
 
                 if found:
-                    if neighbor_cost > score:
+                    if debug:
+                        logging.debug(f'Found existing graph {visited=} in open list with score {score=}')
+                    if neighbor_cost < score:
+                        if debug:
+                            logging.debug(f'Removing best graph with cost {score=} with graph with cost {neighbor_cost=}')
                         open_list.remove((score, visited))
                         logging.debug(open_list)
-                        logging.debug(f'{(neighbor_cost, neighbor_graph)=}')
 
                         open_list.append((neighbor_cost, neighbor_graph))
 
                 else:
                     logging.debug(open_list)
-                    logging.debug(f'{(neighbor_cost, neighbor_graph)=}')
+                    if debug:
+                        logging.debug(f'No existing graph found adding graph to open list {(neighbor_cost, neighbor_graph)=}')
 
                     open_list.append((neighbor_cost, neighbor_graph))
 
-            closed_list.append(neighbor_graph)
+            closed_list.append(cur_graph)
 
     def expand(self, graph: DiGraph, closed_list: List[DiGraph]) -> List[DiGraph]:
         neighbors = []
@@ -99,7 +115,7 @@ class UCS(Search):
 
             if (self.criterion and self.criterion(neighbor) and
                neighbor not in neighbors and
-               not any(nx.is_isomorphic(neighbor, exists) for exists in closed_list)):
+               not any(nx.utils.graphs_equal(neighbor, exists) for exists in closed_list)):
                 neighbors.append(neighbor)
 
         return neighbors

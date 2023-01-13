@@ -18,6 +18,10 @@ def parse_args():
                         choices=['BFS', 'DFS', 'UCS', 'A*', 'HC'],
                         help='Search algorithm to find the optimal graph')
 
+    parser.add_argument('-ef', '--edge-function', type=str,
+                        choices=['ReLU', 'Const', 'None'], default='None',
+                        help='Transformation function for the weights of the edges in weighted search')
+
     parser.add_argument('-sf', '--scoring-function', type=str, choices=['BIC'],
                         default='BIC', help='Scoring function for a given graph')
 

@@ -51,6 +51,21 @@ def get_scoring_function(fn_name: str, debug):
         return BicScore
 
 
+def get_edge_function(fn_name: str, debug):
+    if debug:
+        logging.info(f'Loading edge function: {fn_name}')
+
+    if fn_name == 'ReLU':
+        fn = lambda cost : np.minimum(cost, 0)
+    elif fn_name == 'const':
+        fn = lambda cost: cost - 10000
+    elif fn_name == 'None':
+        fn = lambda x: x
+    else:
+        raise ValueError('Edge function does not exists')
+
+    return fn
+
 def get_criterion(criterion: str, debug):
     if debug:
         logging.info(f'Loading criterion function: {criterion}')

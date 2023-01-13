@@ -5,7 +5,7 @@ from .hc import HillClimb
 import logging
 logger = logging.getLogger(__name__)
 
-from src.utils.model_utils import get_criterion, get_goal, get_scoring_function
+from src.utils.model_utils import get_criterion, get_goal, get_scoring_function, get_edge_function
 
 
 def get_model(network, debug, **kwargs):
@@ -26,7 +26,9 @@ def get_model(network, debug, **kwargs):
         criterion = get_criterion(kwargs.pop('criterion'), debug)
         goal_test = get_goal(kwargs.pop('goal_test'), network, debug)
         scoring_function = get_scoring_function(kwargs.pop('scoring_function'), debug)
-        model = UCS(network, criterion=criterion, goal_test=goal_test, scoring_function=scoring_function, **kwargs)
+        edge_function = get_edge_function(kwargs.pop('edge_function'), debug)
+        model = UCS(network, criterion=criterion, goal_test=goal_test, scoring_function=scoring_function,
+                    edge_function=edge_function, **kwargs)
 
     elif search_method == 'HC':
         scoring_function = get_scoring_function(kwargs.pop('scoring_function'), debug)

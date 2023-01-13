@@ -61,5 +61,5 @@ class BFS(Search):
 
         already_expanded_set = set(already_expanded)
         kept = [new_graph for new_graph in new_nodes
-                if not any(nx.is_isomorphic(new_graph, exists) for exists in already_expanded_set)]
+                if not any(nx.utils.graphs_equal(new_graph, exists) for exists in already_expanded_set)]
         return kept

@@ -22,7 +22,7 @@ def run_experiment(search_method: Search, save_path: str, debug):
     if debug:
         logging.info(f'Start time: {datetime.now()}')
 
-    best_graph = search_method.find()
+    best_graph = search_method.find(debug)
 
     end = time()
     if debug:
