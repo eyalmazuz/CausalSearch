@@ -27,7 +27,8 @@ def run_experiment(search_method: Search, save_path: str, debug):
     end = time()
     if debug:
         logging.info(f'End time: {datetime.now()}')
-    logging.info(f'Run took {end - start} seconds')
+        logging.info(f'Run took {end - start} seconds')
+    print(f'Run took {end - start} seconds')
 
     if hasattr(search_method, 'data'):
         data = search_method.data

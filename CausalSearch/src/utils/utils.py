@@ -13,6 +13,9 @@ from networkx.classes.digraph import DiGraph
 from pgmpy.models.BayesianNetwork import BayesianNetwork  # type: ignore
 
 
+def graph_to_str(g):
+    return ' '.join([f'{u}->{v}' for (u, v) in g.edges])
+
 def generate_fake_data(network: BayesianNetwork, n: int=1000) -> pd.DataFrame:
     return bnlearn.sampling(network, n=n)
 
