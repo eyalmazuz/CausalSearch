@@ -1,16 +1,17 @@
 from functools import partial
 from math import log
 import logging
-logger = logging.getLogger(__name__)
 
 import numpy as np
-from pgmpy.estimators import StructureScore
+from pgmpy.estimators import StructureScore, BicScore
 
 from src.utils.goals import connected_degree_one, target_graph
 from src.utils.utils import check_is_dag
 
+logger = logging.getLogger(__name__)
 
-class BicScore(StructureScore):
+
+class BicScore2(StructureScore):
     def __init__(self, data, **kwargs):
         super(BicScore, self).__init__(data, **kwargs)
 
@@ -18,11 +19,11 @@ class BicScore(StructureScore):
         'Computes a score that measures how much a \
         given variable is "influenced" by a given list of potential parents.'
 
-        # var_states = self.state_names[variable]
-        # var_cardinality = len(var_states)
+        var_states = self.state_names[variable]
+        var_cardinality = len(var_states)
         state_counts = self.state_counts(variable, parents)
-        # sample_size = len(self.data)
-        # num_parents_states = float(state_counts.shape[1])
+        sample_size = len(self.data)
+        num_parents_states = float(state_counts.shape[1])
 
         counts = np.asarray(state_counts)
         log_likelihoods = np.zeros_like(counts, dtype=float)
@@ -39,7 +40,7 @@ class BicScore(StructureScore):
         log_likelihoods *= counts
 
         score = np.sum(log_likelihoods)
-        # score -= 0.5 * log(sample_size) * num_parents_states * (var_cardinality - 1)
+        score -= 0.5 * log(sample_size) * num_parents_states * (var_cardinality - 1)
 
         return score
 
@@ -56,11 +57,11 @@ def get_edge_function(fn_name: str, debug):
         logging.info(f'Loading edge function: {fn_name}')
 
     if fn_name == 'ReLU':
-        fn = lambda cost : np.minimum(cost, 0)
+        fn = lambda neighbor, cost : np.minimum(neighbor - cost, 0)
     elif fn_name == 'const':
-        fn = lambda cost: cost - 10000
+        fn = lambda neighbor, cost: (neighbor -cost) - 10000
     elif fn_name == 'None':
-        fn = lambda x: x
+        fn = lambda neighbor, cost: neighbor - cost
     else:
         raise ValueError('Edge function does not exists')
 

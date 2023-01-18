@@ -12,18 +12,18 @@ class HillClimb(Search):
                  network,
                  scoring_function,
                  epsilon=1e-4,
-                 n=1000,
+                 number_of_samples=1000,
                  **kwargs):
         
         super(HillClimb, self).__init__(network, scoring_function=scoring_function)
         
         self.epsilon = epsilon
-        self.n = n
-        self.data = generate_fake_data(network, n)
+        self.number_of_samples = number_of_samples
+        self.data = generate_fake_data(network, number_of_samples)
 
         self.estimator = HillClimbSearch(self.data)
 
-    def find(self) -> DiGraph:
+    def find(self, debug) -> DiGraph:
         best_model = self.estimator.estimate(scoring_method=self.scoring_function(self.data),
                                              epsilon=self.epsilon)
         

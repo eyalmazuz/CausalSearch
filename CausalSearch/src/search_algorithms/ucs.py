@@ -18,12 +18,12 @@ class UCS(Search):
                  goal_test,
                  scoring_function,
                  edge_function,
-                 n=1000,
+                 number_of_samples=1000,
                  **kwargs):
         super(UCS, self).__init__(network, criterion, goal_test)
 
-        self.n = n
-        self.data = generate_fake_data(network, n)
+        self.number_of_samples = number_of_samples
+        self.data = generate_fake_data(network, number_of_samples)
         self.scorer = scoring_function(self.data)
         self.edge_function = edge_function
 
@@ -52,25 +52,24 @@ class UCS(Search):
             if debug:
                 logging.debug(f'{len(open_list)=}, {len(closed_list)=}')
 
-            # Finds the minimum edge graph from the queue
+            # Finds the minimum node graph from the queue
             best, graph = float('inf'), None
+            if debug:
+                logging.debug(f'{best=}, {None=}')
             for (cost, cur_graph) in open_list:
-                if cost <= best:
+                # if cost < best:
+                    if debug:
+                        logging.debug(f'Found better graph in open list {cost=} {graph_to_str(cur_graph)=}')
                     best = cost
                     graph = cur_graph
 
-            # "pops" the minimum edge from the queue
+            # "pops" the minimum node from the queue
             if graph is not None:
-                open_list.remove((cost, cur_graph))
+                open_list.remove((best, graph))
 
+            cost, cur_graph = best, graph
             if debug:
                 logging.debug(f'Best Graph at iteration {iteration=} {cost=}, {graph_to_str(cur_graph)=}')
-
-            cost, cur_graph = 0.0, graph
-            for node in graph:
-                cost -= self.scorer.local_score(node, graph.predecessors(node))  # Positive bic score
-
-
 
             # checks if the node is our goal and return it if so
             if self.goal_test(cur_graph):
@@ -81,24 +80,19 @@ class UCS(Search):
             if debug:
                 logging.debug(f'Iteration {iteration=} has {len(neighbors)=} new neighbors')
 
-            # Checks if one of the neighbor is the goal and return it if so
-            for neighbor_graph in neighbors:
-                if self.goal_test(neighbor_graph):
-                    return neighbor_graph
-
             # Iterates over the neighbors and inserts them into the open list if necessary
             for neighbor_graph in neighbors:
                 neighbor_bic = 0.0
                 for node in neighbor_graph:
                     neighbor_bic -= self.scorer.local_score(node, neighbor_graph.predecessors(node))
 
-                # Transform the edge weight if needed (i.e. if we use negative weights then make sure no weight is > 0)
-                neighbor_cost = self.edge_function(neighbor_bic - cost)
                 if debug:
-                    logging.debug(f'New neighbor BIC {neighbor_bic=} {cost=} Before: {(neighbor_bic - cost)=} After: {neighbor_cost=}')
+                    logging.debug(f'Old neighbor BIC {neighbor_bic=} {cost=} Edge Weight={(neighbor_bic - cost)=}')
+                # Transform the edge weight if needed (i.e. if we use negative weights then make sure no weight is > 0)
+                neighbor_bic = self.edge_function(neighbor_bic, cost) + cost
+                if debug:
+                    logging.debug(f'New neighbor BIC {neighbor_bic=}')
 
-                # if neighbor_bic - cost > 0:
-                #     neighbor_bic = float('inf')
                 # Checks for duplicates in the open list
                 # if the graph already exists in the open list
                 # we will insert it only if the weight we found is better
@@ -115,22 +109,22 @@ class UCS(Search):
                         logging.debug(f'Found existing graph {graph_to_str(visited)=} in open list with score {score=}')
 
                     # checks that the new edge weight is better than the existing one.
-                    if neighbor_cost < score:
+                    if neighbor_bic < score:
                         if debug:
-                            logging.debug(f'Removing best graph with cost {score=} with graph with cost {neighbor_cost=}')
+                            logging.debug(f'Removing best graph with cost {score=} with graph with cost {neighbor_bic=}')
                         # if it better, we remove the node entry from the open list and append the better one
                         open_list.remove((score, visited))
                         logging.debug(open_list)
 
-                        open_list.append((neighbor_cost, neighbor_graph))
+                        open_list.append((neighbor_bic, neighbor_graph))
 
                 # there is no existing node in the open list
                 # we will just add the node as a new one
                 else:
                     if debug:
-                        logging.debug(f'No existing graph found adding graph to open list {(neighbor_cost, graph_to_str(neighbor_graph))=}')
+                        logging.debug(f'No existing graph found adding graph to open list {(neighbor_bic, graph_to_str(neighbor_graph))=}')
 
-                    open_list.append((neighbor_cost, neighbor_graph))
+                    open_list.append((neighbor_bic, neighbor_graph))
 
             if debug:
                 logging.debug([(c, graph_to_str(g)) for (c, g) in open_list])

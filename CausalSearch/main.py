@@ -31,6 +31,9 @@ def parse_args():
     parser.add_argument('-gt', '--goal-test', type=str, choices=['Degree One'],
                         help='goal test criteria for search methods')
 
+    parser.add_argument('-n', '--number-of-samples', type=int, default=1000,
+                        help='number of data points to generate')
+
     parser.add_argument('-d', '--data', type=str, required=True, help='path to the bif graph file')
 
     parser.add_argument('--epsilon', type=float, help='epsilon threshold for hill climb')
@@ -58,9 +61,9 @@ def main():
     if debug:
         logging.info(f'{model_params=}')
 
-    save_path = model_params.pop('save_path')
+    # save_path = model_params.pop('save_path')
     if debug:
-        logging.info(f'Will save results to: {save_path}')
+        logging.info(f'Will save results to: {args.save_path}')
 
     if debug:
         logging.info('Creating search algorithm')
@@ -68,7 +71,7 @@ def main():
 
     if debug:
         logging.info('Running experiment')
-    run_experiment(search_algorithm, save_path, debug)
+    run_experiment(search_algorithm, args, debug)
 
 
 if __name__ == "__main__":

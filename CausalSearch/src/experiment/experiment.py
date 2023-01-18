@@ -16,7 +16,7 @@ from src.search_algorithms.abstract_search import Search
 from src.utils.utils import generate_fake_data
 
 
-def run_experiment(search_method: Search, save_path: str, debug):
+def run_experiment(search_method: Search, args, debug):
 
     start = time()
     if debug:
@@ -33,11 +33,11 @@ def run_experiment(search_method: Search, save_path: str, debug):
     if hasattr(search_method, 'data'):
         data = search_method.data
     else:
-        data = generate_fake_data(search_method.network)
+        data = generate_fake_data(search_method.network, n=args.number_of_samples)
 
     if debug:
         logging.info('Logging results')
-    log_results(best_graph, search_method.network, data, save_path, debug)
+    log_results(best_graph, search_method.network, data, args.save_path, debug)
 
 
 def log_results(best_graph: DiGraph, network: BayesianNetwork, data, save_path: str, debug):
