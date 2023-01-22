@@ -19,7 +19,7 @@ class HillClimb(Search):
         super(HillClimb, self).__init__(network, scoring_function=scoring_function)
         
         self.epsilon = epsilon
-        self.number_of_samples = number_of_samples
+        self.number_of_samples = number_of_samples if data is None else data.shape[0]
         self.data = generate_fake_data(network, number_of_samples) if data is None else data
 
         self.estimator = HillClimbSearch(self.data)

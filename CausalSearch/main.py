@@ -32,12 +32,13 @@ def parse_args():
     parser.add_argument('-gt', '--goal-test', type=str, choices=['Degree One'],
                         help='goal test criteria for search methods')
 
-    parser.add_argument('-n', '--number-of-samples', type=int, default=1000,
-                        help='number of data points to generate')
-
     parser.add_argument('-g', '--graph', type=str, required=True, help='path to the bif graph file')
 
-    parser.add_argument('-d', '--data', type=str, help='path to the csv data file')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-d', '--data', type=str, help='path to the csv data file')
+
+    group.add_argument('-n', '--number-of-samples', type=int, default=1000,
+                        help='number of data points to generate')
 
     parser.add_argument('--epsilon', type=float, help='epsilon threshold for hill climb')
 

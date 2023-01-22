@@ -23,7 +23,7 @@ class UCS(Search):
                  **kwargs):
         super(UCS, self).__init__(network, criterion, goal_test)
 
-        self.number_of_samples = number_of_samples
+        self.number_of_samples = number_of_samples if data is None else data.shape[0]
         self.data = generate_fake_data(network, number_of_samples) if data is None else data
         self.scorer = scoring_function(self.data)
         self.edge_function = edge_function
