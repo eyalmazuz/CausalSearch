@@ -13,13 +13,14 @@ class HillClimb(Search):
                  scoring_function,
                  epsilon=1e-4,
                  number_of_samples=1000,
+                 data=None,
                  **kwargs):
         
         super(HillClimb, self).__init__(network, scoring_function=scoring_function)
         
         self.epsilon = epsilon
         self.number_of_samples = number_of_samples
-        self.data = generate_fake_data(network, number_of_samples)
+        self.data = generate_fake_data(network, number_of_samples) if data is None else data
 
         self.estimator = HillClimbSearch(self.data)
 

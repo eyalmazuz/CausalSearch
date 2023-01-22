@@ -17,6 +17,7 @@ def graph_to_str(g):
     return ' '.join([f'{u}->{v}' for (u, v) in g.edges])
 
 def generate_fake_data(network: BayesianNetwork, n: int=1000) -> pd.DataFrame:
+    logger.info('Generating fake data')
     return bnlearn.sampling(network, n=n)
 
 

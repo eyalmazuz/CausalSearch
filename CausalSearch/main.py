@@ -4,6 +4,7 @@ import logging
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 import bnlearn as bn
+import pandas as pd
 
 from src.experiment.experiment import run_experiment
 from src.search_algorithms.get_model import get_model
@@ -34,7 +35,9 @@ def parse_args():
     parser.add_argument('-n', '--number-of-samples', type=int, default=1000,
                         help='number of data points to generate')
 
-    parser.add_argument('-d', '--data', type=str, required=True, help='path to the bif graph file')
+    parser.add_argument('-g', '--graph', type=str, required=True, help='path to the bif graph file')
+
+    parser.add_argument('-d', '--data', type=str, help='path to the csv data file')
 
     parser.add_argument('--epsilon', type=float, help='epsilon threshold for hill climb')
 
@@ -53,25 +56,33 @@ def main():
 
     if debug:
         logging.basicConfig(filename=f"logs/{datetime.now()}.log", format=FORMAT, level=logging.DEBUG)
-        logging.info(f'Loading graph from: {args.data}')
+        logging.info(f'Loading graph from: {args.graph}')
 
-    network = bn.import_DAG(args.data)
+    network = bn.import_DAG(args.graph)
+
+    if args.data is not None:
+        logging.info(f'Loading csv data from {args.data} for {args.graph}')
+        data_path = args.data
+        del args.data
+        data = pd.read_csv(data_path)
+    else:
+        data = None
 
     model_params = {k: v for k, v in vars(args).items() if v}
     if debug:
         logging.info(f'{model_params=}')
 
-    # save_path = model_params.pop('save_path')
     if debug:
         logging.info(f'Will save results to: {args.save_path}')
 
     if debug:
         logging.info('Creating search algorithm')
-    search_algorithm = get_model(network, debug, **model_params)
+
+    search_algorithm = get_model(network, debug, data=data, **model_params)
 
     if debug:
         logging.info('Running experiment')
-    run_experiment(search_algorithm, args, debug)
+    run_experiment(search_algorithm, args, data=None, debug=debug)
 
 
 if __name__ == "__main__":

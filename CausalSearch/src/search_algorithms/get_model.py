@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 from src.utils.model_utils import get_criterion, get_goal, get_scoring_function, get_edge_function
 
 
-def get_model(network, debug, **kwargs):
+def get_model(network, debug, data=None, **kwargs):
     search_method = kwargs.pop('search_method')
     if debug:
         logging.info(f'Loading search method: {search_method}')
@@ -28,11 +28,11 @@ def get_model(network, debug, **kwargs):
         scoring_function = get_scoring_function(kwargs.pop('scoring_function'), debug)
         edge_function = get_edge_function(kwargs.pop('edge_function'), debug)
         model = UCS(network, criterion=criterion, goal_test=goal_test, scoring_function=scoring_function,
-                    edge_function=edge_function, **kwargs)
+                    edge_function=edge_function, data=data, **kwargs)
 
     elif search_method == 'HC':
         scoring_function = get_scoring_function(kwargs.pop('scoring_function'), debug)
-        model = HillClimb(network, scoring_function=scoring_function, **kwargs)
+        model = HillClimb(network, scoring_function=scoring_function, data=data, **kwargs)
 
     else:
         raise ValueError('Search method does not exists')
