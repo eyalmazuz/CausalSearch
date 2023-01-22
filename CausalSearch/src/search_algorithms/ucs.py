@@ -58,7 +58,7 @@ class UCS(Search):
             if debug:
                 logging.debug(f'{best=}, {None=}')
             for (cost, cur_graph) in open_list:
-                # if cost < best:
+                if cost < best:
                     if debug:
                         logging.debug(f'Found better graph in open list {cost=} {graph_to_str(cur_graph)=}')
                     best = cost
