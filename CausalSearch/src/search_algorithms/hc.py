@@ -24,7 +24,7 @@ class HillClimb(Search):
 
         self.estimator = HillClimbSearch(self.data)
 
-    def find(self, debug) -> DiGraph:
+    def find(self, run=None, debug=False) -> DiGraph:
         best_model = self.estimator.estimate(scoring_method=self.scoring_function(self.data),
                                              epsilon=self.epsilon)
         

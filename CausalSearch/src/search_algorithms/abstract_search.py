@@ -17,5 +17,5 @@ class Search(ABC):
         self.scoring_function = scoring_function
 
     @abstractmethod
-    def find(self) -> DiGraph:
-        raise NotImplemented
+    def find(self, run=None, debug=False) -> DiGraph:
+        raise NotImplementedError

@@ -16,7 +16,7 @@ class BFS(Search):
                  **kwargs):
         super(BFS, self).__init__(network, criterion, goal_test)
 
-    def find(self, debug=False) -> DiGraph:
+    def find(self, run=None, debug=False) -> DiGraph:
 
         graph = nx.DiGraph()
         graph.add_nodes_from(self.network['model'])

@@ -1,0 +1,184 @@
+diff --git a/CausalSearch/main.py b/CausalSearch/main.py
+index 24713fc..ef76817 100644
+--- a/CausalSearch/main.py
++++ b/CausalSearch/main.py
+@@ -1,7 +1,7 @@
+ from argparse import ArgumentParser
+ from datetime import datetime
+ import logging
+-logging.getLogger('matplotlib').setLevel(logging.WARNING)
++import os
+ 
+ import bnlearn as bn
+ import pandas as pd
+@@ -9,6 +9,7 @@ import pandas as pd
+ from src.experiment.experiment import run_experiment
+ from src.search_algorithms.get_model import get_model
+ 
++logging.getLogger('matplotlib').setLevel(logging.WARNING)
+ FORMAT = '%(asctime)s %(message)s'
+ 
+ 
+@@ -46,6 +47,8 @@ def parse_args():
+ 
+     parser.add_argument('--debug', help='print helpful debug message', action='store_true')
+ 
++    parser.add_argument('--wandb', action='store_true', help='whether to report to wandb or not')
++
+     return parser.parse_args()
+ 
+ 
+@@ -55,6 +58,13 @@ def main():
+     debug = args.debug
+     del args.debug
+ 
++    if args.wandb:
++        import wandb
++        run = wandb.init(project='SAI', tags=[args.search_method, args.graph], group=os.path.basename(args.graph), config=args)
++
++    else:
++        run = None
++
+     if debug:
+         logging.basicConfig(filename=f"logs/{datetime.now()}.log", format=FORMAT, level=logging.DEBUG)
+         logging.info(f'Loading graph from: {args.graph}')
+@@ -66,6 +76,8 @@ def main():
+         data_path = args.data
+         del args.data
+         data = pd.read_csv(data_path)
++        if run:
++            run.config['number_of_samples'] = data.shape[0]
+     else:
+         data = None
+ 
+@@ -83,7 +95,7 @@ def main():
+ 
+     if debug:
+         logging.info('Running experiment')
+-    run_experiment(search_algorithm, args, data=None, debug=debug)
++    run_experiment(search_algorithm, args, data=data, run=run, debug=debug)
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/CausalSearch/src/experiment/experiment.py b/CausalSearch/src/experiment/experiment.py
+index 340770d..3b5c13e 100644
+--- a/CausalSearch/src/experiment/experiment.py
++++ b/CausalSearch/src/experiment/experiment.py
+@@ -16,31 +16,35 @@ from src.search_algorithms.abstract_search import Search
+ from src.utils.utils import generate_fake_data
+ 
+ 
+-def run_experiment(search_method: Search, args, data=None, debug=False):
++def run_experiment(search_method: Search, args, data=None, run=None, debug=False):
+ 
+     start = time()
+     if debug:
+         logging.info(f'Start time: {datetime.now()}')
+ 
+-    best_graph = search_method.find(debug)
++    best_graph = search_method.find(run, debug)
+ 
+-    end = time()
++    run_time = time() - start
+     if debug:
+         logging.info(f'End time: {datetime.now()}')
+-        logging.info(f'Run took {end - start} seconds')
+-    print(f'Run took {end - start} seconds')
++        logging.info(f'Run took {run_time} seconds')
++    print(f'Run took {run_time} seconds')
++
++    if run:
++        run.summary['run_time'] = run_time
+ 
+     if hasattr(search_method, 'data'):
+         data = search_method.data
+     elif data is None:
+         data = generate_fake_data(search_method.network, n=args.number_of_samples)
+ 
++
+     if debug:
+         logging.info('Logging results')
+-    log_results(best_graph, search_method.network, data, args.save_path, debug)
++    log_results(best_graph, search_method.network, data, run, args.save_path, debug)
+ 
+ 
+-def log_results(best_graph: DiGraph, network: BayesianNetwork, data, save_path: str, debug):
++def log_results(best_graph: DiGraph, network: BayesianNetwork, data, run, save_path: str, debug):
+ 
+     save_path = os.path.join(save_path, str(datetime.now()))
+     if not os.path.exists(save_path):
+@@ -88,6 +92,10 @@ def log_results(best_graph: DiGraph, network: BayesianNetwork, data, save_path:
+     if debug:
+         logging.info(f'Precision: {round(precision, 4)}, Recall: {round(recall, 4)} BIC: {round(bic_score, 4)}')
+ 
++    if run:
++        run.summary['precision'] = precision
++        run.summary['recall'] = recall
++        run.summary['bic_score'] = bic_score
+ 
+ def main():
+     pass
+diff --git a/CausalSearch/src/search_algorithms/abstract_search.py b/CausalSearch/src/search_algorithms/abstract_search.py
+index 3ae97d4..5837bd1 100644
+--- a/CausalSearch/src/search_algorithms/abstract_search.py
++++ b/CausalSearch/src/search_algorithms/abstract_search.py
+@@ -17,5 +17,5 @@ class Search(ABC):
+         self.scoring_function = scoring_function
+ 
+     @abstractmethod
+-    def find(self) -> DiGraph:
+-        raise NotImplemented
++    def find(self, run=None, debug=False) -> DiGraph:
++        raise NotImplementedError
+diff --git a/CausalSearch/src/search_algorithms/bfs.py b/CausalSearch/src/search_algorithms/bfs.py
+index 92c6d31..621ea7a 100644
+--- a/CausalSearch/src/search_algorithms/bfs.py
++++ b/CausalSearch/src/search_algorithms/bfs.py
+@@ -16,7 +16,7 @@ class BFS(Search):
+                  **kwargs):
+         super(BFS, self).__init__(network, criterion, goal_test)
+ 
+-    def find(self, debug=False) -> DiGraph:
++    def find(self, run=None, debug=False) -> DiGraph:
+ 
+         graph = nx.DiGraph()
+         graph.add_nodes_from(self.network['model'])
+diff --git a/CausalSearch/src/search_algorithms/dfs.py b/CausalSearch/src/search_algorithms/dfs.py
+index 29c5466..05c4da5 100644
+--- a/CausalSearch/src/search_algorithms/dfs.py
++++ b/CausalSearch/src/search_algorithms/dfs.py
+@@ -17,7 +17,7 @@ class DFS(Search):
+                  **kwargs):
+         super(DFS, self).__init__(network, criterion, goal_test)
+ 
+-    def find(self) -> DiGraph:
++    def find(self, run=None, debug=False) -> DiGraph:
+ 
+         graph = nx.DiGraph()
+         graph.add_nodes_from(self.network['model'])
+diff --git a/CausalSearch/src/search_algorithms/hc.py b/CausalSearch/src/search_algorithms/hc.py
+index 7857be7..8503f2a 100644
+--- a/CausalSearch/src/search_algorithms/hc.py
++++ b/CausalSearch/src/search_algorithms/hc.py
+@@ -24,7 +24,7 @@ class HillClimb(Search):
+ 
+         self.estimator = HillClimbSearch(self.data)
+ 
+-    def find(self, debug) -> DiGraph:
++    def find(self, run=None, debug=False) -> DiGraph:
+         best_model = self.estimator.estimate(scoring_method=self.scoring_function(self.data),
+                                              epsilon=self.epsilon)
+         
+diff --git a/CausalSearch/src/search_algorithms/ucs.py b/CausalSearch/src/search_algorithms/ucs.py
+index bb06e97..d809436 100644
+--- a/CausalSearch/src/search_algorithms/ucs.py
++++ b/CausalSearch/src/search_algorithms/ucs.py
+@@ -28,7 +28,7 @@ class UCS(Search):
+         self.scorer = scoring_function(self.data)
+         self.edge_function = edge_function
+ 
+-    def find(self, debug=False) -> DiGraph:
++    def find(self, run=None, debug=False) -> DiGraph:
+ 
+         graph = nx.DiGraph()
+         graph.add_nodes_from(self.network['model'])

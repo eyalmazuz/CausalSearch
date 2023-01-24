@@ -17,7 +17,7 @@ class DFS(Search):
                  **kwargs):
         super(DFS, self).__init__(network, criterion, goal_test)
 
-    def find(self) -> DiGraph:
+    def find(self, run=None, debug=False) -> DiGraph:
 
         graph = nx.DiGraph()
         graph.add_nodes_from(self.network['model'])

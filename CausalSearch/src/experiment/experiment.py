@@ -16,31 +16,35 @@ from src.search_algorithms.abstract_search import Search
 from src.utils.utils import generate_fake_data
 
 
-def run_experiment(search_method: Search, args, data=None, debug=False):
+def run_experiment(search_method: Search, args, data=None, run=None, debug=False):
 
     start = time()
     if debug:
         logging.info(f'Start time: {datetime.now()}')
 
-    best_graph = search_method.find(debug)
+    best_graph = search_method.find(run, debug)
 
-    end = time()
+    run_time = time() - start
     if debug:
         logging.info(f'End time: {datetime.now()}')
-        logging.info(f'Run took {end - start} seconds')
-    print(f'Run took {end - start} seconds')
+        logging.info(f'Run took {run_time} seconds')
+    print(f'Run took {run_time} seconds')
+
+    if run:
+        run.summary['run_time'] = run_time
 
     if hasattr(search_method, 'data'):
         data = search_method.data
     elif data is None:
         data = generate_fake_data(search_method.network, n=args.number_of_samples)
 
+
     if debug:
         logging.info('Logging results')
-    log_results(best_graph, search_method.network, data, args.save_path, debug)
+    log_results(best_graph, search_method.network, data, run, args.save_path, debug)
 
 
-def log_results(best_graph: DiGraph, network: BayesianNetwork, data, save_path: str, debug):
+def log_results(best_graph: DiGraph, network: BayesianNetwork, data, run, save_path: str, debug):
 
     save_path = os.path.join(save_path, str(datetime.now()))
     if not os.path.exists(save_path):
@@ -88,6 +92,10 @@ def log_results(best_graph: DiGraph, network: BayesianNetwork, data, save_path: 
     if debug:
         logging.info(f'Precision: {round(precision, 4)}, Recall: {round(recall, 4)} BIC: {round(bic_score, 4)}')
 
+    if run:
+        run.summary['precision'] = precision
+        run.summary['recall'] = recall
+        run.summary['bic_score'] = bic_score
 
 def main():
     pass

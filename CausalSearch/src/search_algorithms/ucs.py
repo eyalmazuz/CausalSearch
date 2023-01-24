@@ -28,7 +28,7 @@ class UCS(Search):
         self.scorer = scoring_function(self.data)
         self.edge_function = edge_function
 
-    def find(self, debug=False) -> DiGraph:
+    def find(self, run=None, debug=False) -> DiGraph:
 
         graph = nx.DiGraph()
         graph.add_nodes_from(self.network['model'])

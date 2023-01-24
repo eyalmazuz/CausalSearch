@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 from datetime import datetime
 import logging
-import os
 
 import bnlearn as bn
 import pandas as pd
@@ -60,7 +59,7 @@ def main():
 
     if args.wandb:
         import wandb
-        run = wandb.init(project='SAI', tags=[args.search_method, args.graph], group=os.path.basename(args.graph), config=args)
+        run = wandb.init(project='SAI', tags=[args.search_method, args.graph], group=args.graph, config=args)
 
     else:
         run = None
